@@ -1,0 +1,43 @@
+# The shell: lint, build and unit tests on every push and pull request touching it.
+name: Shell
+
+on:
+  push:
+    branches: [main]
+    paths: ["shell/**", ".github/workflows/shell.yml"]
+  pull_request:
+    paths: ["shell/**", ".github/workflows/shell.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Lint, build and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: shell
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node (version from .nvmrc)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: shell/.nvmrc
+          # npm packages cached, keyed on the lock file.
+          cache: npm
+          cache-dependency-path: shell/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test -- --watch=false
